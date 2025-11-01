@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang='uz'>
 <head>
 <meta charset='UTF-8'>
@@ -11,20 +11,20 @@ h1 {color:#333; margin-bottom:15px;}
 button {background:#0088cc; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:16px; transition:0.3s; margin-top:10px;}
 button:hover {background:#006699;}
 input[type='text'], textarea {width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; font-size:16px; margin-top:10px;}
-video, img {width:100%; border-radius:10px; margin-top:10px;}
+video, img {width:100%; border-radius:10px; margin-top:10px; background:black;}
 </style>
 </head>
 <body>
   <div class='card'>
-    <h1>?? Mebel suratini yuborish</h1>
+    <h1>[KAMERA] Mebel suratini yuborish</h1>
     <video id='camera' autoplay playsinline></video>
-    <button onclick='takePhoto(1)'>1?? Birinchi surat</button>
-    <button onclick='takePhoto(2)'>2?? Ikkinchi surat</button>
+    <button onclick='takePhoto(1)'>[1] Birinchi surat</button>
+    <button onclick='takePhoto(2)'>[2] Ikkinchi surat</button>
     <canvas id='canvas' style='display:none;'></canvas>
     <img id='photo1' alt='1-rasm yo‘q'>
     <img id='photo2' alt='2-rasm yo‘q'>
     <textarea id='message' placeholder='Sharh yoki narxni kiriting...'></textarea>
-    <button onclick='sendToTelegram()'>?? Telegramga yuborish</button>
+    <button onclick='sendToTelegram()'>[YUBORISH] Telegramga yuborish</button>
     <p id='status'></p>
   </div>
 
@@ -34,7 +34,7 @@ let photos = {};
 
 async function startCamera() {
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
     document.getElementById('camera').srcObject = stream;
   } catch (e) {
     alert('Kamera ishlamadi: ' + e.message);
@@ -56,12 +56,12 @@ async function sendToTelegram() {
   const msg = document.getElementById('message').value.trim();
   const status = document.getElementById('status');
   if (!photos.photo1 || !photos.photo2) {
-    status.innerText = '? Iltimos, 2 ta surat oling.';
+    status.innerText = '[!] Iltimos, 2 ta surat oling.';
     status.style.color = 'red';
     return;
   }
 
-  status.innerText = '? Yuborilmoqda...';
+  status.innerText = '[...] Yuborilmoqda...';
   status.style.color = '#444';
 
   const botToken = '8549302717:AAFIs_62CbYCzErnkvTqbfJPOV2DMPLlmH8';
@@ -80,11 +80,11 @@ async function sendToTelegram() {
   try {
     await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, { method: 'POST', body: form1, mode: 'no-cors' });
     await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, { method: 'POST', body: form2, mode: 'no-cors' });
-    status.innerText = '? 2 ta surat va xabar yuborildi!';
+    status.innerText = '[OK] 2 ta surat va xabar yuborildi!';
     status.style.color = 'green';
     document.getElementById('message').value = '';
   } catch (err) {
-    status.innerText = '?? Internet ulanmagan yoki API ishlamayapti.';
+    status.innerText = '[X] Internet ulanmagan yoki API ishlamayapti.';
     status.style.color = 'red';
   }
 }
