@@ -5,67 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mebel suratini yuborish</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f1f5f9;
-  color: #222;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-}
-h1 {
-  color: #333;
-  margin-bottom: 15px;
-  text-align: center;
-}
-.card {
-  background: white;
-  padding: 25px;
-  border-radius: 16px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.1);
-  width: 100%;
-  max-width: 420px;
-}
-button {
-  background: #0088cc;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: 0.3s;
-  margin-top: 10px;
-}
-button:hover { background: #006699; }
-input[type='text'], textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 16px;
-  margin-top: 10px;
-}
-video, img {
-  width: 100%;
-  border-radius: 10px;
-  margin-top: 10px;
-  background: black;
-}
+body { font-family: Arial; background: #f1f5f9; display:flex; flex-direction:column; align-items:center; padding:20px; }
+.card { background:#fff; padding:20px; border-radius:14px; box-shadow:0 0 10px rgba(0,0,0,0.1); width:100%; max-width:420px; }
+video, img { width:100%; border-radius:10px; margin-top:10px; background:black; }
+button { background:#0088cc; color:white; border:none; padding:10px; border-radius:8px; margin-top:10px; cursor:pointer; }
+select, textarea { width:100%; margin-top:10px; padding:8px; border-radius:8px; border:1px solid #ccc; }
 </style>
 </head>
 <body>
 <div class="card">
-  <h1>📷 Mebel suratini yuborish</h1>
+  <h2>📷 Mebel suratini yuborish</h2>
+  <select id="cameraSelect"></select>
   <video id="camera" autoplay playsinline></video>
-  <button onclick="takePhoto(1)">[1] Birinchi surat</button>
-  <button onclick="takePhoto(2)">[2] Ikkinchi surat</button>
+  <button onclick="takePhoto(1)">1-rasm olish</button>
+  <button onclick="takePhoto(2)">2-rasm olish</button>
   <canvas id="canvas" style="display:none;"></canvas>
-  <img id="photo1" alt="1-rasm yo‘q">
-  <img id="photo2" alt="2-rasm yo‘q">
-  <textarea id="message" placeholder="Sharh yoki narxni kiriting..."></textarea>
-  <button onclick="sendToTelegram()">[YUBORISH] Telegramga yuborish</button>
+  <img id="photo1"><img id="photo2">
+  <textarea id="message" placeholder="Sharh yoki narx yozing..."></textarea>
+  <button onclick="sendToTelegram()">Telegramga yuborish</button>
   <p id="status"></p>
 </div>
 
@@ -73,28 +30,26 @@ video, img {
 let stream;
 let photos = {};
 
+async function initCameras() {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  const videoDevices = devices.filter(d => d.kind === 'videoinput');
+  const select = document.getElementById('cameraSelect');
+  select.innerHTML = '';
+  videoDevices.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d.deviceId;
+    opt.text = d.label || `Kamera ${select.length + 1}`;
+    select.appendChild(opt);
+  });
+  select.onchange = startCamera;
+  startCamera();
+}
+
 async function startCamera() {
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const videoDevices = devices.filter(d => d.kind === 'videoinput');
-    console.log('Topilgan kameralar:', videoDevices);
-
-    // Orqa kamerani aniqlash
-    let backCam = videoDevices.find(d => d.label.toLowerCase().includes('back')) || videoDevices[0];
-
-    if (!backCam) {
-      alert('Kamera topilmadi.');
-      return;
-    }
-
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { deviceId: { exact: backCam.deviceId } }
-    });
-
-    document.getElementById('camera').srcObject = stream;
-  } catch (e) {
-    alert('Kamera ishlamadi: ' + e.message);
-  }
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  const deviceId = document.getElementById('cameraSelect').value;
+  stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } });
+  document.getElementById('camera').srcObject = stream;
 }
 
 function takePhoto(num) {
@@ -108,54 +63,39 @@ function takePhoto(num) {
   photos['photo' + num] = dataUrl;
 }
 
-async function sendToTelegram() {
-  const msg = document.getElementById('message').value.trim();
-  const status = document.getElementById('status');
-  if (!photos.photo1 || !photos.photo2) {
-    status.innerText = '[!] Iltimos, 2 ta surat oling.';
-    status.style.color = 'red';
-    return;
-  }
-
-  status.innerText = '[...] Yuborilmoqda...';
-  status.style.color = '#444';
-
-  const botToken = '8549302717:AAFIs_62CbYCzErnkvTqbfJPOV2DMPLlmH8';
-  const chatId = '-1002111099262';
-
-  const form1 = new FormData();
-  form1.append('chat_id', chatId);
-  form1.append('caption', msg + ' (1-rasm)');
-  form1.append('photo', dataURLtoBlob(photos.photo1), 'photo1.jpg');
-
-  const form2 = new FormData();
-  form2.append('chat_id', chatId);
-  form2.append('caption', msg + ' (2-rasm)');
-  form2.append('photo', dataURLtoBlob(photos.photo2), 'photo2.jpg');
-
-  try {
-    await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, { method: 'POST', body: form1 });
-    await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, { method: 'POST', body: form2 });
-    status.innerText = '[OK] 2 ta surat va xabar yuborildi!';
-    status.style.color = 'green';
-    document.getElementById('message').value = '';
-  } catch (err) {
-    status.innerText = '[X] Internet ulanmagan yoki API ishlamayapti.';
-    status.style.color = 'red';
-  }
-}
-
 function dataURLtoBlob(dataURL) {
   const arr = dataURL.split(',');
   const mime = arr[0].match(/:(.*?);/)[1];
   const bstr = atob(arr[1]);
   let n = bstr.length;
   const u8arr = new Uint8Array(n);
-  while (n--) { u8arr[n] = bstr.charCodeAt(n); }
+  while (n--) u8arr[n] = bstr.charCodeAt(n);
   return new Blob([u8arr], { type: mime });
 }
 
-startCamera();
+async function sendToTelegram() {
+  const msg = document.getElementById('message').value.trim();
+  const status = document.getElementById('status');
+  if (!photos.photo1 || !photos.photo2) {
+    status.innerText = 'Avval 2 ta surat oling!';
+    status.style.color = 'red';
+    return;
+  }
+  status.innerText = 'Yuborilmoqda...';
+  const botToken = '8549302717:AAFIs_62CbYCzErnkvTqbfJPOV2DMPLlmH8';
+  const chatId = '-1002111099262';
+  for (let i=1; i<=2; i++) {
+    const form = new FormData();
+    form.append('chat_id', chatId);
+    form.append('caption', msg + ` (${i}-rasm)`);
+    form.append('photo', dataURLtoBlob(photos['photo'+i]), `photo${i}.jpg`);
+    await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, { method:'POST', body: form });
+  }
+  status.innerText = '✅ Yuborildi!';
+  status.style.color = 'green';
+}
+
+initCameras();
 </script>
 </body>
 </html>
