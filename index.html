@@ -34,12 +34,12 @@ async function startCamera() {
     alert('Kamera ishlamadi: ' + e.message);
   }
 }
-
+ 
 function switchCamera() {
   currentFacing = (currentFacing === 'environment') ? 'user' : 'environment';
   startCamera();
-}
-
+} 
+ 
 startCamera();
 </script>
 </body>
