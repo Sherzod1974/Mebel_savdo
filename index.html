@@ -1,46 +1,123 @@
 <!DOCTYPE html>
-<html lang="uz">
+<html lang='uz'>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kamera test</title>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+<title>Mebel suratini yuborish</title>
 <style>
-body { font-family: sans-serif; text-align: center; background: #f1f5f9; }
-video { width: 90%; margin-top: 20px; border-radius: 10px; background: black; }
-button { margin: 10px; padding: 10px 20px; font-size: 16px; border: none; border-radius: 8px; background: #0088cc; color: white; }
-button:hover { background: #006699; }
+body {font-family: Arial, sans-serif; background:#f1f5f9; color:#222; display:flex; flex-direction:column; align-items:center; padding:20px;}
+h1 {color:#333; margin-bottom:15px;}
+.card {background:white; padding:25px; border-radius:16px; box-shadow:0 0 15px rgba(0,0,0,0.1); text-align:center; width:100%; max-width:420px;}
+button {background:#0088cc; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-size:16px; transition:0.3s; margin-top:10px;}
+button:hover {background:#006699;}
+input[type='text'], textarea {width:100%; padding:10px; border:1px solid #ccc; border-radius:8px; font-size:16px; margin-top:10px;}
+video, img {width:100%; border-radius:10px; margin-top:10px; background:black;}
 </style>
 </head>
 <body>
-<h2>📸 Kamera test sahifasi</h2>
-<video id="camera" autoplay playsinline></video><br>
-<button onclick="switchCamera()">Kamerani almashtirish</button>
-<p id="status"></p>
+  <div class='card'>
+    <h1>Mebel suratini yuborish</h1>
+    <video id='camera' autoplay playsinline></video>
+    <div style='display:flex; justify-content:space-between; width:100%;'>
+      <button onclick='switchCamera()'>Kamerani almashtirish</button>
+      <button onclick='takePhoto(1)'>1-rasm</button>
+      <button onclick='takePhoto(2)'>2-rasm</button>
+    </div>
+    <canvas id='canvas' style='display:none;'></canvas>
+    <img id='photo1' alt='1-rasm yo‘q'>
+    <img id='photo2' alt='2-rasm yo‘q'>
+    <textarea id='message' placeholder='Sharh yoki narxni kiriting...'></textarea>
+    <button onclick='sendToTelegram()'>Yuborish</button>
+    <p id='status'></p>
+  </div>
 
 <script>
-let currentFacing = 'environment';
 let stream;
-  
-async function startCamera() {
+let currentCamera = 0;
+const cameras = [
+  { id: 'a70fc1b9361020d1e2cbf5f98bd7884976ee6bbc30b689a2b46af2eaff07afa7', name: 'Orqa kamera 1' },
+  { id: '0cb289f8724973d8ea9f8d6ab46f966e412c990cf1fd76a6244345a5fc996fb3', name: 'Orqa kamera 2' },
+  { id: '9971811609e43ff8ea3eea11eadc408f6e97a006699cd1435bb88c88cc223426', name: 'Old kamera 1' }
+];
+let photos = {};
+
+async function startCamera(deviceId) {
   try {
-    if (stream) stream.getTracks().forEach(t => t.stop());
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: currentFacing }
-    });
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+    }
+    stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } });
     document.getElementById('camera').srcObject = stream;
-    document.getElementById('status').innerText = 
-      (currentFacing === 'environment' ? 'Orqa kamera' : 'Old kamera') + ' yoqildi';
   } catch (e) {
     alert('Kamera ishlamadi: ' + e.message);
   }
 }
- 
+
 function switchCamera() {
-  currentFacing = (currentFacing === 'environment') ? 'user' : 'environment';
-  startCamera();
-} 
- 
-startCamera();
+  currentCamera = (currentCamera + 1) % cameras.length;
+  startCamera(cameras[currentCamera].id);
+  document.getElementById('status').innerText = cameras[currentCamera].name + ' yoqildi';
+}
+
+function takePhoto(num) {
+  const video = document.getElementById('camera');
+  const canvas = document.getElementById('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  const dataUrl = canvas.toDataURL('image/jpeg');
+  document.getElementById('photo' + num).src = dataUrl;
+  photos['photo' + num] = dataUrl;
+}
+
+async function sendToTelegram() {
+  const msg = document.getElementById('message').value.trim();
+  const status = document.getElementById('status');
+  if (!photos.photo1 || !photos.photo2) {
+    status.innerText = 'Iltimos, 2 ta surat oling.';
+    status.style.color = 'red';
+    return;
+  }
+
+  status.innerText = 'Yuborilmoqda...';
+  status.style.color = '#444';
+
+  const botToken = '8549302717:AAFIs_62CbYCzErnkvTqbfJPOV2DMPLlmH8';
+  const chatId = '-1002111099262';
+
+  const form1 = new FormData();
+  form1.append('chat_id', chatId);
+  form1.append('caption', msg + ' (1-rasm)');
+  form1.append('photo', dataURLtoBlob(photos.photo1), 'photo1.jpg');
+
+  const form2 = new FormData();
+  form2.append('chat_id', chatId);
+  form2.append('caption', msg + ' (2-rasm)');
+  form2.append('photo', dataURLtoBlob(photos.photo2), 'photo2.jpg');
+
+  try {
+    await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, { method: 'POST', body: form1 });
+    await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, { method: 'POST', body: form2 });
+    status.innerText = '2 ta surat yuborildi!';
+    status.style.color = 'green';
+    document.getElementById('message').value = '';
+  } catch (err) {
+    status.innerText = 'Internet ulanmagan yoki API ishlamayapti.';
+    status.style.color = 'red';
+  }
+}
+
+function dataURLtoBlob(dataURL) {
+  const arr = dataURL.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while(n--) u8arr[n] = bstr.charCodeAt(n);
+  return new Blob([u8arr], { type: mime });
+}
+
+startCamera(cameras[0].id);
 </script>
 </body>
 </html>
