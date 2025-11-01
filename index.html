@@ -16,18 +16,18 @@ video, img {width:100%; border-radius:10px; margin-top:10px; background:black;}
 </head>
 <body>
   <div class='card'>
-    <h1>📷 Mebel suratini yuborish</h1>
+    <h1>Mebel suratini yuborish</h1>
     <video id='camera' autoplay playsinline></video>
     <div style='display:flex; justify-content:space-between; width:100%;'>
-      <button onclick='switchCamera()'>🔄 Kamerani almashtirish</button>
-      <button onclick='takePhoto(1)'>📸 1-rasm</button>
-      <button onclick='takePhoto(2)'>📸 2-rasm</button>
+      <button onclick='switchCamera()'>Kamerani almashtirish</button>
+      <button onclick='takePhoto(1)'>1-rasm</button>
+      <button onclick='takePhoto(2)'>2-rasm</button>
     </div>
     <canvas id='canvas' style='display:none;'></canvas>
     <img id='photo1' alt='1-rasm yo‘q'>
     <img id='photo2' alt='2-rasm yo‘q'>
     <textarea id='message' placeholder='Sharh yoki narxni kiriting...'></textarea>
-    <button onclick='sendToTelegram()'>📨 Yuborish</button>
+    <button onclick='sendToTelegram()'>Yuborish</button>
     <p id='status'></p>
   </div>
 
@@ -74,12 +74,12 @@ async function sendToTelegram() {
   const msg = document.getElementById('message').value.trim();
   const status = document.getElementById('status');
   if (!photos.photo1 || !photos.photo2) {
-    status.innerText = '[!] Iltimos, 2 ta surat oling.';
+    status.innerText = 'Iltimos, 2 ta surat oling.';
     status.style.color = 'red';
     return;
   }
 
-  status.innerText = '[...] Yuborilmoqda...';
+  status.innerText = 'Yuborilmoqda...';
   status.style.color = '#444';
 
   const botToken = '8549302717:AAFIs_62CbYCzErnkvTqbfJPOV2DMPLlmH8';
@@ -98,11 +98,11 @@ async function sendToTelegram() {
   try {
     await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, { method: 'POST', body: form1 });
     await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, { method: 'POST', body: form2 });
-    status.innerText = '[OK] 2 ta surat yuborildi!';
+    status.innerText = '2 ta surat yuborildi!';
     status.style.color = 'green';
     document.getElementById('message').value = '';
   } catch (err) {
-    status.innerText = '[X] Internet ulanmagan yoki API ishlamayapti.';
+    status.innerText = 'Internet ulanmagan yoki API ishlamayapti.';
     status.style.color = 'red';
   }
 }
@@ -121,4 +121,3 @@ startCamera(cameras[0].id);
 </script>
 </body>
 </html>
-
