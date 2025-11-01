@@ -20,7 +20,7 @@ button:hover { background: #006699; }
 <script>
 let currentFacing = 'environment';
 let stream;
-
+  
 async function startCamera() {
   try {
     if (stream) stream.getTracks().forEach(t => t.stop());
