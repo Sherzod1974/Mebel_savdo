@@ -33,9 +33,17 @@ tr:hover{background:#e3f2fd;cursor:pointer;}
 input:checked + .slider{background-color:#2196F3;}
 input:checked + .slider:before{transform:translateX(30px);content:'\2600';}
 </style></head><body><div class='container'>
-<div id='page1'>
+<div id='page0'>
+<h2 style='text-align:center;'>Ishchi kirish oynasi</h2>
+<div style='max-width:350px;margin:auto;text-align:center;'>
+<input type='text' id='userName' placeholder='Ismingizni kiriting'>
+<input type='password' id='userPass' placeholder='Parolingizni kiriting'>
+<button onclick='loginUser()'>Kirish</button>
+<p id='loginMsg' style='color:red;'></p>
+</div></div>
+<div id='page1' style='display:none;'>
 <h2 style='font-size:20px; text-align:left;'>Sotuvchi: Sherzodbek</h2>
-<h2 style='font-size:16px; text-align:left;'>Mebel ro‘yxati (03-11-2025_15-41-27)</h2>
+<h2 style='font-size:16px; text-align:left;'>Mebel ro‘yxati (03-11-2025_16-47-24)</h2>
 <div class='top-bar'>
 <span id='count'>Tanlanganlar: 0 ta</span>
 <button style='background:#f44336;' onclick='clearSelected()'>Tozalash</button>
@@ -706,7 +714,7 @@ input:checked + .slider:before{transform:translateX(30px);content:'\2600';}
 <tr id='row_4628' class='row-yellow' onclick="toggleSelect('4628','garnitur panda [umar]',9364000,8464000)">
 <td>4628</td><td>garnitur panda [umar]</td><td>9 364 000</td><td>8 464 000</td></tr>
 </table></div></div>
-<div id='page2'>
+<div id='page2' style='display:none;'>
 <h2>Tanlangan mebellar</h2>
 <div class='top-bar'>
 <button onclick='goBack()'>Asosiy sahifa</button>
@@ -727,4 +735,16 @@ function openSelected(){document.getElementById('page1').style.display='none';do
 function goBack(){document.getElementById('page2').style.display='none';document.getElementById('page1').style.display='block';}
 function renderSelected(){let table=document.getElementById('selectedTable');table.innerHTML='<tr><th>ID</th><th>Nomi</th><th>Sotish</th><th>Minimal</th><th>Bekor</th></tr>';let totalS=0,totalM=0;selected.forEach((x,i)=>{totalS+=x.sotish;totalM+=x.min;table.innerHTML+=`<tr><td>${x.id}</td><td>${x.nomi}</td><td>${x.sotish.toLocaleString()}</td><td>${x.min.toLocaleString()}</td><td><button onclick='removeItem(${i})'>Olib tashla</button></td></tr>`;});document.getElementById('total').innerHTML=`Umumiy sotish: ${totalS.toLocaleString()}<br>Minimal narx: ${totalM.toLocaleString()}`;}
 function removeItem(i){let removed=selected.splice(i,1)[0];document.getElementById('row_'+removed.id).classList.remove('selected');localStorage.setItem('selectedMebel', JSON.stringify(selected));document.getElementById('count').innerText='Tanlanganlar: '+selected.length+' ta';renderSelected();}
+function loginUser(){
+  let name=document.getElementById('userName').value.trim();
+  let pass=document.getElementById('userPass').value.trim();
+  if(!name || !pass){document.getElementById('loginMsg').innerText='Iltimos, barcha maydonlarni to‘ldiring!';return;}
+  fetch('/check_login?name='+encodeURIComponent(name)+'&pass='+encodeURIComponent(pass))
+  .then(r=>r.text())
+  .then(res=>{
+    if(res==='ok'){document.getElementById('page0').style.display='none';document.getElementById('page1').style.display='block';}
+    else{document.getElementById('loginMsg').innerText='Xato ism yoki parol!';}
+  })
+  .catch(e=>{document.getElementById('loginMsg').innerText='Server bilan aloqa yo‘q!';});
+}
 </script></div></body></html>
